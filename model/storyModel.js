@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const storySchema = new mongoose.Schema(
   {
+    private: {
+      type: Boolean,
+      default: true,
+    },
     author: {
       type: mongoose.Schema.ObjectId,
       ref: "user",
@@ -14,7 +18,6 @@ const storySchema = new mongoose.Schema(
     images: [
       {
         type: String,
-        required: [true, "at least one image is required for a story"],
         default: "defaultImage.jpg",
       },
     ],

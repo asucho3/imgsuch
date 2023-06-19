@@ -7,6 +7,7 @@ const router = express.Router();
 //use protect middleware to protect all the following routes
 router.use(authController.protect);
 
+router.get("/:id/getStory", storyController.getStory);
 router.patch("/:id/updateStory", storyController.updateStory);
 router.delete("/:id/removeStory", storyController.removeStory);
 

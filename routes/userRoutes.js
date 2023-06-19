@@ -4,6 +4,8 @@ const authController = require("./../controllers/authController");
 
 const router = express.Router();
 
+router.get("/checkConsistency", userController.checkConsistency);
+
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
 router.get("/logout", authController.logout);
@@ -15,14 +17,31 @@ router.use(authController.protect);
 
 router.patch("/updatePassword", authController.updatePassword);
 
+// profile
+router.patch(
+  "/:id/updateProfile/",
+  userController.uploadPhotoImage,
+  userController.resizePhotoImage,
+  userController.updateProfile
+);
+
 // friends
-router.post("/:id/addFriend/", userController.addFriend);
+router.post("/:id/sendFriendRequest/", userController.sendFriendRequest);
+router.post("/:id/cancelFriendRequest/", userController.cancelFriendRequest);
+router.post("/:id/acceptFriendRequest/", userController.acceptFriendRequest);
 router.get("/getFriends", userController.getFriends);
 router.delete("/:id/removeFriend/", userController.removeFriend);
 
 // stories
-router.post("/createStory", userController.createStory);
+router.post(
+  "/createStory",
+  userController.uploadStoryImage,
+  userController.resizeStoryImage,
+  userController.createStory
+);
 router.get("/getMyStories", userController.getMyStories);
+router.get("/:id/getUserStories/", userController.getUserStories);
+router.get("/getFriendsStories", userController.getFriendsStories);
 
 router.use(authController.restrictTo("admin"));
 router.get("/", userController.getAllUsers);

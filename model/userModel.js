@@ -3,70 +3,100 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "name is required"],
-  },
-  email: {
-    type: String,
-    required: [true, "email is required"],
-    unique: true,
-    lowercase: true,
-    validate: [validator.isEmail, "please provide a valid email"],
-  },
-  photo: {
-    type: String,
-    default: "default.jpg",
-  },
-  role: {
-    type: String,
-    enum: ["user", "moderator", "admin"],
-    default: "user",
-  },
-  password: {
-    type: String,
-    required: [true, "password is required"],
-    minlength: 8,
-    select: false,
-  },
-  passwordConfirm: {
-    type: String,
-    required: [true, "please confirm your password"],
-    validate: {
-      //this only works on CREATE and SAVE methods
-      validator: function (val) {
-        return val === this.password;
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "name is required"],
+    },
+    email: {
+      type: String,
+      required: [true, "email is required"],
+      unique: true,
+      lowercase: true,
+      validate: [validator.isEmail, "please provide a valid email"],
+    },
+    photo: {
+      type: String,
+      default: "default.jpg",
+    },
+    role: {
+      type: String,
+      enum: ["user", "moderator", "admin"],
+      default: "user",
+    },
+    password: {
+      type: String,
+      required: [true, "password is required"],
+      minlength: 8,
+      select: false,
+    },
+    passwordConfirm: {
+      type: String,
+      required: [true, "please confirm your password"],
+      validate: {
+        //this only works on CREATE and SAVE methods
+        validator: function (val) {
+          return val === this.password;
+        },
+        message: "please confirm your password correctly",
       },
-      message: "please confirm your password correctly",
+    },
+    passwordChangedAt: {
+      type: Date,
+    },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+    active: {
+      type: Boolean,
+      default: true,
+      select: false,
+    },
+    ignoreList: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "user",
+      },
+    ],
+    friendsRequestsReceived: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "user",
+      },
+    ],
+    friendsRequestsSent: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "user",
+      },
+    ],
+    friends: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "user",
+      },
+    ],
+    stories: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "story",
+      },
+    ],
+    rating: {
+      type: Number,
+      default: 0,
     },
   },
-  passwordChangedAt: {
-    type: Date,
-  },
-  passwordResetToken: String,
-  passwordResetExpires: Date,
-  active: {
-    type: Boolean,
-    default: true,
-    select: false,
-  },
-  friends: [
-    {
-      type: mongoose.Schema.ObjectId,
-      ref: "user",
-    },
-  ],
-  stories: [
-    {
-      type: mongoose.Schema.ObjectId,
-      ref: "story",
-    },
-  ],
-  rating: {
-    type: Number,
-    default: 0,
-  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+userSchema.virtual("comments", {
+  ref: "comment",
+  foreignField: "author",
+  localField: "_id",
 });
 
 //encrypt the password
