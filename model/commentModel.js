@@ -15,9 +15,17 @@ const commentSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  private: {
+    type: Boolean,
+    default: false,
+  },
   comment: {
     type: String,
     required: [true, "a comment must be provided"],
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 });
 

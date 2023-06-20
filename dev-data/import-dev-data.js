@@ -7,6 +7,7 @@ const Story = require("./../model/storyModel");
 const Comment = require("./../model/commentModel");
 const User = require("./../model/userModel");
 const { faker } = require("@faker-js/faker");
+const random = require("lodash.random");
 
 dotenv.config({ path: "./config.env" });
 
@@ -56,7 +57,10 @@ const users = Array.from({ length: NUM_USERS }, (el) => {
 if (process.argv[2] === "--import") {
   (async function () {
     try {
+      // create all the fake users
       const usersIDs = await User.create(users, { validateBeforeSave: false });
+      let stories = [];
+      // loop through the fake users and add up to STORY_COUNT stories with their IDs
       for (let index of usersIDs) {
         const STORY_COUNT = Math.ceil(Math.random() * 10);
         for (let i = 0; i < STORY_COUNT; i++) {
@@ -65,9 +69,26 @@ if (process.argv[2] === "--import") {
           story.title = faker.word.words(2);
           story.text = faker.word.words({ count: { min: 5, max: 10 } });
           story.private = Math.random() * 10 < 2 ? true : false;
-          await Story.create(story);
+          stories = [...stories, story];
         }
       }
+      const storiesIDs = await Story.create(stories);
+
+      // loop through the fake stories and add up to COMMENT_COUNT with a random UserID each time
+      let comments = [];
+      const COMMENT_COUNT = 5;
+      for (let storyIndex of storiesIDs) {
+        for (let i = 0; i < COMMENT_COUNT; i++) {
+          const randomIndex = random(0, usersIDs.length - 1, false);
+          const comment = {};
+          comment.story = storyIndex.id;
+          comment.author = usersIDs[randomIndex].id;
+          comment.comment = faker.hacker.phrase();
+          comments = [...comments, comment];
+        }
+      }
+      const commentsIDs = await Comment.create(comments);
+
       //   await Story.create(stories);
       //   await Comment.create(comments);
       console.log("done importing data");
@@ -82,7 +103,7 @@ if (process.argv[2] === "--delete") {
     try {
       await User.deleteMany();
       await Story.deleteMany();
-      //   await Comment.deleteMany();
+      await Comment.deleteMany();
       console.log("done deleting data");
     } catch (err) {
       console.log(err);

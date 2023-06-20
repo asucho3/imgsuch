@@ -82,9 +82,25 @@ const userSchema = new mongoose.Schema(
         ref: "story",
       },
     ],
+    ratedStories: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "story",
+      },
+    ],
+    ratedComments: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "story",
+      },
+    ],
     rating: {
       type: Number,
       default: 0,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {

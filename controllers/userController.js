@@ -289,10 +289,19 @@ exports.createStory = catchAsync(async function (req, res, next) {
 });
 
 exports.getMyStories = catchAsync(async function (req, res, next) {
-  const stories = await User.findById(req.user.id).select("stories");
+  const storiesObj = await User.findById(req.user.id).select("stories");
+  const storiesArr = storiesObj.stories;
+  const stories = await Story.find({ _id: { $in: storiesArr } });
+
+  let filteredStories = stories;
+
+  if (req.user.role !== "admin") {
+    filteredStories = stories.filter((story) => story.disabled === false);
+  }
+
   res.status(200).json({
     status: "success",
-    data: stories,
+    data: filteredStories,
   });
 });
 
@@ -300,19 +309,25 @@ exports.getUserStories = catchAsync(async function (req, res, next) {
   // get all the stories for this user
   const stories = await Story.find({ author: req.params.id });
 
-  let displayStories = stories;
+  let filteredStories = stories;
+  // filter out disabled stories
+  if (req.user.role !== "admin") {
+    filteredStories = stories.filter((story) => story.disabled === false);
+  }
+
   // determine if the user is or not a friend of the requesting user
   if (
     String(req.params.id) !== String(req.user.id) &&
-    !req.user.friends.includes(req.params.id)
+    !req.user.friends.includes(req.params.id) &&
+    req.user.role !== "admin"
   ) {
     // if this is not a friend, only return the public stories
-    displayStories = stories.filter((el) => el.private === false);
+    filteredStories = filteredStories.filter((el) => el.private === false);
   }
 
   res.status(200).json({
     status: "success",
-    data: displayStories,
+    data: filteredStories,
   });
 });
 
@@ -328,9 +343,15 @@ exports.getFriendsStories = catchAsync(async function (req, res, next) {
     _id: { $in: friendsStoriesIds },
   }).populate("author");
 
+  let filteredStories;
+  // filter out disabled stories
+  if (req.user.role !== "admin") {
+    filteredStories = stories.filter((story) => story.disabled === false);
+  }
+
   res.status(200).json({
     status: "success",
-    data: stories,
+    data: filteredStories,
   });
 });
 

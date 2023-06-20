@@ -16,6 +16,7 @@ router.patch("/resetPassword/:token", authController.resetPassword);
 router.use(authController.protect);
 
 router.patch("/updatePassword", authController.updatePassword);
+router.delete("/:id/disableUser", authController.disableUser);
 
 // profile
 router.patch(

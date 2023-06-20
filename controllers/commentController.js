@@ -9,32 +9,77 @@ exports.updateComment = catchAsync(async (req, res, next) => {
   // check that the comment is not empty
   if (!req.body.comment) return next(new AppError("comment cannot be empty"));
 
-  let comment = await Comment.findById(req.params.id);
-
-  // check that the user is the author of this comment
-  if (req.user.id !== String(comment.author))
-    return next(new AppError("you are not the author of this comment!"));
-
-  // perform the update
-  comment.comment = req.body.comment;
-  await Comment.findByIdAndUpdate(req.params.id, comment, { new: true });
+  const updatedComment = await Comment.findByIdAndUpdate(
+    req.params.id,
+    { comment: req.body.comment },
+    { new: true }
+  );
 
   res.status(200).json({
     status: "success",
-    data: comment,
+    data: updatedComment,
+  });
+});
+
+exports.toggleRateComment = catchAsync(async function (req, res, next) {
+  // adjust the rate variable for upvote/remove upvote
+  let rate;
+  if (req.user.ratedComments.includes(String(req.params.id))) {
+    rate = -1;
+    req.user.ratedComments = req.user.ratedComments.filter(
+      (commentID) => String(commentID) !== String(req.params.id)
+    );
+  } else {
+    rate = 1;
+    req.user.ratedComments = [...req.user.ratedComments, req.params.id];
+  }
+
+  req.model.rating = Number(req.model.rating);
+  req.model.rating += rate;
+
+  // execute the query
+  const updatedComment = await Comment.findByIdAndUpdate(
+    req.params.id,
+    {
+      rating: req.model.rating,
+    },
+    { new: true }
+  );
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      ratedComments: req.user.ratedComments,
+    },
+    { new: true }
+  );
+
+  const data = { updatedComment, updatedUser };
+
+  res.status(200).json({
+    status: "success",
+    data,
+  });
+});
+
+exports.disableComment = catchAsync(async (req, res, next) => {
+  //delete the comment
+  const updatedComment = await Comment.findByIdAndUpdate(
+    req.params.id,
+    { disabled: true },
+    { new: true }
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: updatedComment,
   });
 });
 
 exports.removeComment = catchAsync(async (req, res, next) => {
-  // check that the user is the author of this comment
-  let comment = await Comment.findById(req.params.id);
-  if (req.user.id !== String(comment.author))
-    return next(new AppError("you are not the author of this comment!"));
-
   //delete the comment
   await Comment.findByIdAndDelete(req.params.id);
 
-  res.status(200).json({
+  res.status(204).json({
     status: "success",
   });
 });

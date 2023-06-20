@@ -4,7 +4,7 @@ const storySchema = new mongoose.Schema(
   {
     private: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     author: {
       type: mongoose.Schema.ObjectId,
@@ -21,8 +21,16 @@ const storySchema = new mongoose.Schema(
         default: "defaultImage.jpg",
       },
     ],
+    rating: {
+      type: Number,
+      default: 0,
+    },
     text: {
       type: String,
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     },
   },
   {

@@ -6,29 +6,31 @@ const AppError = require("./../utils/appError");
 const Email = require("./../utils/email");
 
 exports.addComment = catchAsync(async (req, res, next) => {
+  // check that the comment is not empty
+  if (!req.body.comment) return next(new AppError("comment cannot be empty"));
+
   // assemble the comment
   let comment = {};
   comment.author = req.user.id;
   comment.story = req.params.id;
   comment.comment = req.body.comment;
+  comment.private = req.model.private;
   comment.rating = 0;
 
   // create the comment document
-  await Comment.create(comment);
+  const newComment = await Comment.create(comment);
 
   // there's no need to add it to the user/story because those models use virtual populates for the comments
   res.status(200).json({
     status: "success",
-    data: comment,
+    data: newComment,
   });
 });
 
 exports.getComments = catchAsync(async (req, res, next) => {
-  // get all the comments for this story id
-  const story = await Story.findById(req.params.id).populate("comments");
   res.status(200).json({
     status: "success",
-    data: story,
+    data: req.model.comments,
   });
 });
 
@@ -44,11 +46,6 @@ exports.updateStory = catchAsync(async function (req, res, next) {
       )
     );
 
-  // check if the user is the author of this story
-  const story = await Story.findById(req.params.id);
-  if (!(req.user.id === String(story.author)))
-    return next(new AppError("you are not the author of this story!"));
-
   // perform the update
   const updatedStory = await Story.findByIdAndUpdate(
     req.params.id,
@@ -63,43 +60,49 @@ exports.updateStory = catchAsync(async function (req, res, next) {
   });
 });
 
-exports.removeStory = catchAsync(async function (req, res, next) {
-  // check if the user is the author of this story
-  const story = await Story.findById(req.params.id);
-  if (!(req.user.id === String(story.author)))
-    return next(new AppError("you are not the author of this story!"));
-
-  // delete the story document
-  await Story.findByIdAndDelete(req.params.id);
-
-  // filter out the stories that do not match this id
-  const updatedStories = req.user.stories.filter((el) => {
-    return String(el) !== String(story._id);
-  });
-
-  // remove the document id from the user 'stories' field
-  await User.findByIdAndUpdate(req.user.id, { stories: [...updatedStories] });
-
-  res.status(204).json({
+exports.getStory = catchAsync(async function (req, res, next) {
+  res.status(200).json({
     status: "success",
+    data: req.model,
   });
 });
 
-exports.getStory = catchAsync(async function (req, res, next) {
-  const story = await Story.findById(req.params.id).populate("comments");
-
-  // only show the story if it is public, OR the author is the requesting user, OR the author is a friend of the user
-  if (
-    story.private &&
-    String(story.author) !== String(req.user.id) &&
-    !req.user.friends.includes(story.author)
-  )
-    return next(
-      new AppError("this story is only shared with friends of this user")
+exports.toggleRateStory = catchAsync(async function (req, res, next) {
+  // adjust the rate variable for upvote/remove upvote
+  let rate;
+  if (req.user.ratedStories.includes(String(req.model._id))) {
+    rate = -1;
+    req.user.ratedStories = req.user.ratedStories.filter(
+      (storyID) => String(storyID) !== String(req.params.id)
     );
+  } else {
+    rate = 1;
+    req.user.ratedStories = [...req.user.ratedStories, req.params.id];
+  }
+
+  req.model.rating = Number(req.model.rating);
+  req.model.rating += rate;
+
+  // execute the query
+  const updatedStory = await Story.findByIdAndUpdate(
+    req.params.id,
+    {
+      rating: req.model.rating,
+    },
+    { new: true }
+  );
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      ratedStories: req.user.ratedStories,
+    },
+    { new: true }
+  );
+
+  const data = { updatedStory, updatedUser };
   res.status(200).json({
     status: "success",
-    data: story,
+    data,
   });
 });
 
@@ -108,5 +111,38 @@ exports.getAllStories = catchAsync(async function (req, res, next) {
   res.status(200).json({
     status: "success",
     data: story,
+  });
+});
+
+exports.disableStory = catchAsync(async function (req, res, next) {
+  // delete the story document
+  const updatedStory = await Story.findByIdAndUpdate(
+    req.params.id,
+    {
+      disabled: true,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: updatedStory,
+  });
+});
+
+exports.removeStory = catchAsync(async function (req, res, next) {
+  // delete the story document
+  await Story.findByIdAndDelete(req.params.id);
+
+  // filter out the stories that do not match this id
+  const updatedStories = req.user.stories.filter((el) => {
+    return String(el) !== String(req.params.id);
+  });
+
+  // remove the document id from the user 'stories' field
+  await User.findByIdAndUpdate(req.user.id, { stories: [...updatedStories] });
+
+  res.status(204).json({
+    status: "success",
   });
 });

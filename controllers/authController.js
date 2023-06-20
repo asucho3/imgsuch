@@ -5,6 +5,9 @@ const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const Email = require("./../utils/email");
 const crypto = require("crypto");
+const Story = require("./../model/storyModel");
+const Comment = require("./../model/commentModel");
+const mongoose = require("mongoose");
 
 const signToken = (id) => {
   return jwt.sign(
@@ -78,6 +81,9 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("incorrect email or password", 401));
   }
+
+  // 2.5) check if the user has been disabled
+  if (user.disabled) return next(new AppError("this user has been disabled"));
 
   // 3) if everything is ok, send token back to client ("log in the client")
   createSendToken(user, 200, req, res);
@@ -228,4 +234,68 @@ exports.updatePassword = catchAsync(async function (req, res, next) {
   console.log("proceeding");
   // 4) log the user in, send the JWT
   createSendToken(user, 200, req, res);
+});
+
+exports.checkIfFriends = catchAsync(async function (req, res, next) {
+  // override this middleware if the user is an admin
+  if (req.user.role === "admin") return next();
+
+  // only allow actions for the story if it is public, OR the author is the requesting user, OR the author is a friend of the user
+  if (
+    req.model.private &&
+    String(req.model.author) !== String(req.user.id) &&
+    !req.user.friends.includes(req.model.author)
+  )
+    return next(
+      new AppError("this action is restricted to friends of this user")
+    );
+
+  next();
+});
+
+exports.checkIfAuthor = (Model) => {
+  return catchAsync(async (req, res, next) => {
+    // override this middleware if the user is an admin
+    if (req.user.role === "admin") return next();
+    if (String(req.user.id) !== String(req.model.author))
+      return next(new AppError("you are not the author of this element!"));
+    next();
+  });
+};
+
+exports.checkIfExists = (Model) => {
+  return catchAsync(async (req, res, next) => {
+    let model;
+    if (Model === Story)
+      model = await Model.findOne(
+        mongoose.Types.ObjectId(req.params.id)
+      ).populate("comments");
+    if (Model === Comment)
+      model = await Model.findOne(mongoose.Types.ObjectId(req.params.id));
+
+    if (!model || (model.disabled && req.user.role !== "admin"))
+      return next(new AppError("there is no active element with that id"));
+
+    req.model = model;
+
+    next();
+  });
+};
+
+exports.disableUser = catchAsync(async function (req, res, next) {
+  let updatedUser;
+  if (req.user.id === req.params.id || req.user.role === "admin") {
+    updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { disabled: true },
+      { new: true }
+    );
+  } else {
+    return next(new AppError("you do not have permission for this action"));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: updatedUser,
+  });
 });
