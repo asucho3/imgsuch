@@ -33,8 +33,8 @@ const createSendToken = (user, statusCode, req, res) => {
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
     ),
     //secure: true, //only send cookie through https
-    httpOnly: true, //cookie cannot be accesed by the browser
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+    // httpOnly: true, //cookie cannot be accesed by the browser
+    // secure: req.secure || req.headers["x-forwarded-proto"] === "https",
   });
 
   //remove the password from the output
@@ -69,7 +69,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-
+  console.log(req.body);
   // 1) check if email and password actually exist
   if (!email || !password)
     return next(new AppError("provide email and password!", 400));
