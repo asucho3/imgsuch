@@ -69,7 +69,6 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(req.body);
   // 1) check if email and password actually exist
   if (!email || !password)
     return next(new AppError("provide email and password!", 400));
@@ -115,6 +114,12 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // 2) verification token
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+  // converting Date.now to seconds, because exp is in seconds
+  if (decoded.exp < Math.floor(Date.now() / 1000)) {
+    res.cookie("jwt", "loggedout");
+    return next(new AppError("this token has expired", 401));
+  }
 
   // 3) if the verification is succesful, check if user still exists
   const freshUser = await User.findById(decoded.id);
@@ -297,5 +302,61 @@ exports.disableUser = catchAsync(async function (req, res, next) {
   res.status(200).json({
     status: "success",
     data: updatedUser,
+  });
+});
+
+exports.isLoggedIn = catchAsync(async function (req, res, next) {
+  // 1) get the token
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  if (!token) return next(new AppError("you are not logged in"), 401);
+
+  // 2) verification token and check if expired
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+  // console.log(`seconds left: ${decoded.exp - Math.floor(Date.now() / 1000)}`);
+
+  // converting Date.now to seconds, because exp is in seconds
+  if (decoded.exp < Math.floor(Date.now() / 1000)) {
+    res.cookie("jwt", "loggedout");
+    return next(new AppError("this token has expired", 401));
+  }
+
+  // 3) if the verification is succesful, check if user still exists
+  const freshUser = await User.findById(decoded.id);
+
+  if (!freshUser) {
+    return next(
+      new AppError("the user belonging to this token no longer exists", 401)
+    );
+  }
+
+  // 4) check if user changed password after the token was issued
+  if (freshUser.changedPasswordAfter(decoded.iat)) {
+    return next(
+      new AppError(
+        "user has changed the password after the token has been issued",
+        401
+      )
+    );
+  }
+  res.status(200).json({
+    status: "success",
+  });
+});
+
+exports.logout = catchAsync(async (req, res, next) => {
+  res.cookie("jwt", "loggedout");
+
+  res.status(200).json({
+    status: "success",
   });
 });

@@ -253,6 +253,24 @@ exports.removeFriend = catchAsync(async function (req, res, next) {
 
 exports.getAllUsers = catchAsync(async function (req, res, next) {
   const users = await User.find().populate("comments");
+  filteredUsers = users.map((user) => {
+    const filteredUser = {
+      id: user.id,
+      name: user.name,
+      rating: user.rating,
+      stories: user.stories.length,
+      photo: user.photo,
+    };
+    return filteredUser;
+  });
+  res.status(200).json({
+    status: "success",
+    data: filteredUsers,
+  });
+});
+
+exports.getAllUsersAdmin = catchAsync(async function (req, res, next) {
+  const users = await User.find().populate("comments");
   res.status(200).json({
     status: "success",
     data: users,
