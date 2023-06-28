@@ -28,9 +28,24 @@ exports.addComment = catchAsync(async (req, res, next) => {
 });
 
 exports.getComments = catchAsync(async (req, res, next) => {
+  // deep clone the req.model.comments array
+  const filteredComments = JSON.parse(JSON.stringify(req.model.comments));
+
+  // if this user is not an admin, map filteredComments, iterate throught the keys of the authors and delete the keys if they are not allowed
+  if (req.user.role !== "admin") {
+    const allowedFields = ["photo", "name", "createdOn"];
+    filteredComments.map((comment) => {
+      for (const key of Object.keys(comment.author)) {
+        if (!allowedFields.includes(key)) {
+          delete comment.author[key];
+        }
+      }
+    });
+  }
+
   res.status(200).json({
     status: "success",
-    data: req.model.comments,
+    data: filteredComments,
   });
 });
 

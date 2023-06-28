@@ -274,7 +274,7 @@ exports.checkIfExists = (Model) => {
     if (Model === Story)
       model = await Model.findOne(
         mongoose.Types.ObjectId(req.params.id)
-      ).populate("comments");
+      ).populate({ path: "comments", populate: { path: "author" } });
     if (Model === Comment)
       model = await Model.findOne(mongoose.Types.ObjectId(req.params.id));
 

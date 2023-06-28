@@ -27,6 +27,10 @@ const commentSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  createdOn: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 const Comment = mongoose.model("comment", commentSchema);

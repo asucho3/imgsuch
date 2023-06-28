@@ -30,7 +30,13 @@ const storySchema = new mongoose.Schema(
     },
     disabled: {
       type: Boolean,
-      default: false
+      default: false,
+    },
+    createdOn: {
+      type: Date,
+      default: () => {
+        return new Date();
+      },
     },
   },
   {

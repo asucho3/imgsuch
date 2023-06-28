@@ -21,7 +21,7 @@ const multerFilter = (req, file, cb) => {
 const upload = multer({
   storage: multerStorage,
   fileFilter: multerFilter,
-  limits: { fileSize: 100000, files: 5 },
+  limits: { fileSize: 10000000, files: 5 },
 });
 
 // Handle story images
@@ -361,7 +361,7 @@ exports.getFriendsStories = catchAsync(async function (req, res, next) {
     _id: { $in: friendsStoriesIds },
   }).populate("author");
 
-  let filteredStories;
+  let filteredStories = stories;
   // filter out disabled stories
   if (req.user.role !== "admin") {
     filteredStories = stories.filter((story) => story.disabled === false);

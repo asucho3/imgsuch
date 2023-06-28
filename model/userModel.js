@@ -102,6 +102,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    createdOn: {
+      type: Date,
+      default: () => {
+        return new Date();
+      },
+    },
   },
   {
     toJSON: { virtuals: true },
