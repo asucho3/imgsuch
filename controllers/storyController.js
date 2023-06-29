@@ -64,7 +64,7 @@ exports.updateStory = catchAsync(async function (req, res, next) {
   // perform the update
   const updatedStory = await Story.findByIdAndUpdate(
     req.params.id,
-    { title, images, text },
+    { title, text },
     {
       new: true,
     }

@@ -14,11 +14,11 @@ const storySchema = new mongoose.Schema(
     title: {
       type: String,
       required: [true, "a title is required"],
+      maxLength: 50,
     },
     images: [
       {
         type: String,
-        default: "defaultImage.jpg",
       },
     ],
     rating: {
@@ -27,6 +27,7 @@ const storySchema = new mongoose.Schema(
     },
     text: {
       type: String,
+      maxLength: 1000,
     },
     disabled: {
       type: Boolean,

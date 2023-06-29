@@ -10,6 +10,7 @@ const sharp = require("sharp");
 // Set up Multer for file storage
 const multerStorage = multer.memoryStorage();
 const multerFilter = (req, file, cb) => {
+  console.log(file);
   if (file.mimetype.startsWith("image")) {
     return cb(null, true);
   } else {
@@ -309,7 +310,9 @@ exports.createStory = catchAsync(async function (req, res, next) {
 exports.getMyStories = catchAsync(async function (req, res, next) {
   const storiesObj = await User.findById(req.user.id).select("stories");
   const storiesArr = storiesObj.stories;
-  const stories = await Story.find({ _id: { $in: storiesArr } });
+  const stories = await Story.find({ _id: { $in: storiesArr } }).populate(
+    "author"
+  );
 
   let filteredStories = stories;
 

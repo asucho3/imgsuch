@@ -22,6 +22,7 @@ const commentSchema = new mongoose.Schema({
   comment: {
     type: String,
     required: [true, "a comment must be provided"],
+    maxLength: 200,
   },
   disabled: {
     type: Boolean,
