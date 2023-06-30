@@ -29,12 +29,12 @@ exports.addComment = catchAsync(async (req, res, next) => {
 
 exports.getComments = catchAsync(async (req, res, next) => {
   // deep clone the req.model.comments array
-  const filteredComments = JSON.parse(JSON.stringify(req.model.comments));
+  const filteredFields = JSON.parse(JSON.stringify(req.model.comments));
 
-  // if this user is not an admin, map filteredComments, iterate throught the keys of the authors and delete the keys if they are not allowed
+  // if this user is not an admin, map filteredFields, iterate throught the keys of the authors and delete the keys if they are not allowed
   if (req.user.role !== "admin") {
-    const allowedFields = ["photo", "name", "createdOn"];
-    filteredComments.map((comment) => {
+    const allowedFields = ["photo", "name", "createdOn", "id"];
+    filteredFields.map((comment) => {
       for (const key of Object.keys(comment.author)) {
         if (!allowedFields.includes(key)) {
           delete comment.author[key];
@@ -42,6 +42,22 @@ exports.getComments = catchAsync(async (req, res, next) => {
       }
     });
   }
+
+  // now, filter out the disabled comments
+  filteredDisabled = filteredFields.filter(
+    (comment) => comment.disabled === false
+  );
+
+  // make a final copy in case we add more filters some time in the future
+  const filteredComments = [...filteredDisabled];
+
+  // for (const [i, comment] of filteredComments.entries()) {
+  //   if (comment.disabled) {
+  //     filteredComments.splice();
+  //   }
+  // }
+
+  // console.log(filteredComments);
 
   res.status(200).json({
     status: "success",
