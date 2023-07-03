@@ -44,9 +44,12 @@ exports.getComments = catchAsync(async (req, res, next) => {
   }
 
   // now, filter out the disabled comments
-  filteredDisabled = filteredFields.filter(
-    (comment) => comment.disabled === false
-  );
+  let filteredDisabled = [];
+  if (req.user.role !== "admin") {
+    filteredDisabled = filteredFields.filter(
+      (comment) => comment.disabled === false
+    );
+  }
 
   // make a final copy in case we add more filters some time in the future
   const filteredComments = [...filteredDisabled];
@@ -111,10 +114,19 @@ exports.toggleRateStory = catchAsync(async function (req, res, next) {
     req.user.ratedStories = [...req.user.ratedStories, req.params.id];
   }
 
+  // apply the rating to both the story and the author
+
+  // find the author of this story
+  const author = await User.findOne({ _id: req.model.author });
+
+  // adjust the rating on the temporary variables
   req.model.rating = Number(req.model.rating);
   req.model.rating += rate;
+  author.rating = Number(author.rating);
+  author.rating += rate;
 
-  // execute the query
+  // execute the queries
+  // update the story rating
   const updatedStory = await Story.findByIdAndUpdate(
     req.params.id,
     {
@@ -122,6 +134,7 @@ exports.toggleRateStory = catchAsync(async function (req, res, next) {
     },
     { new: true }
   );
+  // add this story to the ratedStories array on the user doing the rating
   const updatedUser = await User.findByIdAndUpdate(
     req.user.id,
     {
@@ -129,8 +142,16 @@ exports.toggleRateStory = catchAsync(async function (req, res, next) {
     },
     { new: true }
   );
+  // update the rating on the author of the story
+  const updatedAuthor = await User.findByIdAndUpdate(
+    author._id,
+    {
+      rating: author.rating,
+    },
+    { new: true }
+  );
 
-  const data = { updatedStory, updatedUser };
+  const data = { updatedStory, updatedUser, updatedAuthor };
   res.status(200).json({
     status: "success",
     data,

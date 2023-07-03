@@ -26,8 +26,11 @@ mongoose
     console.log("DB connection succesful");
   });
 
-const NUM_USERS = 10;
 const NUM_STORIES = 10;
+const NUM_AVAILABLE_STORY_IMAGES = 10;
+
+const NUM_AVAILABLE_USER_PHOTOS = 26;
+const NUM_USERS = NUM_AVAILABLE_USER_PHOTOS;
 
 // const stories = JSON.parse(
 //   fs.readFileSync(`${__dirname}/stories.json`, "utf-8")
@@ -36,22 +39,30 @@ const NUM_STORIES = 10;
 //   fs.readFileSync(`${__dirname}/comments.json`, "utf-8")
 // );
 
+// prepare the array of fake user photos to avoid duplication
+let i = 0;
+const availableUserPhotos = Array.from(
+  { length: NUM_AVAILABLE_USER_PHOTOS },
+  (el) => (el = `user-${i++}.jpg`)
+);
+
 const users = Array.from({ length: NUM_USERS }, (el) => {
   el = {};
   el.name = faker.internet.userName().toLowerCase();
   el.email = `${el.name}@example.com`;
   el.role = "user";
   el.password = "test1234";
+  el.photo = availableUserPhotos.pop();
   return el;
 });
 
-// const stories = Array.from({ length: NUM_STORIES }, (el) => {
-//   el = {};
-//   el.title = faker.word.words(2);
-//   el.text = faker.word.words({ count: { min: 5, max: 10 } });
-//   el.private = Math.random() * 10 < 2 ? true : false;
-//   return el;
-// });
+// // const stories = Array.from({ length: NUM_STORIES }, (el) => {
+// //   el = {};
+// //   el.title = faker.word.words(2);
+// //   el.text = faker.word.words({ count: { min: 5, max: 10 } });
+// //   el.private = Math.random() * 10 < 2 ? true : false;
+// //   return el;
+// // });
 
 // import/delete test data to/from database
 if (process.argv[2] === "--import") {
@@ -65,10 +76,23 @@ if (process.argv[2] === "--import") {
         const STORY_COUNT = Math.ceil(Math.random() * 10);
         for (let i = 0; i < STORY_COUNT; i++) {
           const story = {};
+          story.images = Array.from({ length: 3 });
           story.author = index._id;
           story.title = faker.word.words(2);
           story.text = faker.word.words({ count: { min: 5, max: 10 } });
-          story.private = Math.random() * 10 < 2 ? true : false;
+          story.images[0] = `story-${random(
+            0,
+            NUM_AVAILABLE_STORY_IMAGES
+          )}.jpg`;
+          story.images[1] = `story-${random(
+            0,
+            NUM_AVAILABLE_STORY_IMAGES
+          )}.jpg`;
+          story.images[2] = `story-${random(
+            0,
+            NUM_AVAILABLE_STORY_IMAGES
+          )}.jpg`;
+          story.private = Math.random() * 20 < 2 ? true : false;
           stories = [...stories, story];
         }
       }

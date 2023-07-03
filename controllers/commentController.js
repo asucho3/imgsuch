@@ -34,10 +34,17 @@ exports.toggleRateComment = catchAsync(async function (req, res, next) {
     req.user.ratedComments = [...req.user.ratedComments, req.params.id];
   }
 
+  // find the author of this story
+  const author = await User.findOne({ _id: req.model.author });
+
+  // adjust the rating on the temporary variables
   req.model.rating = Number(req.model.rating);
   req.model.rating += rate;
+  author.rating = Number(author.rating);
+  author.rating += rate;
 
   // execute the query
+  // update the comment rating
   const updatedComment = await Comment.findByIdAndUpdate(
     req.params.id,
     {
@@ -45,6 +52,7 @@ exports.toggleRateComment = catchAsync(async function (req, res, next) {
     },
     { new: true }
   );
+  // update the rated comments on the user doing the rating
   const updatedUser = await User.findByIdAndUpdate(
     req.user.id,
     {
@@ -52,8 +60,16 @@ exports.toggleRateComment = catchAsync(async function (req, res, next) {
     },
     { new: true }
   );
+  // update the rating on the author of the comment
+  const updatedAuthor = await User.findByIdAndUpdate(
+    author._id,
+    {
+      rating: author.rating,
+    },
+    { new: true }
+  );
 
-  const data = { updatedComment, updatedUser };
+  const data = { updatedComment, updatedUser, updatedAuthor };
 
   res.status(200).json({
     status: "success",
