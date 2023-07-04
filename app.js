@@ -23,7 +23,7 @@ const app = express();
 // Because the back end and the front end are in different ports/locations, we must specify the origin and the credentials
 app.use(
   cors({
-    origin: "https://imgsuch.netlify.app/",
+    origin: "https://imgsuch.netlify.app",
     credentials: true,
   })
 );
