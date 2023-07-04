@@ -10,13 +10,14 @@ const sendErrorDev = (err, req, res) => {
       message: err.message,
       stack: err.stack,
     });
-  } else {
-    //RENDERED WEBSITE errors
-    return res.status(err.statusCode).render("error", {
-      title: "Something went wrong",
-      msg: err.message,
-    });
   }
+  // else {
+  //   //RENDERED WEBSITE errors
+  //   return res.status(err.statusCode).render("error", {
+  //     title: "Something went wrong",
+  //     msg: err.message,
+  //   });
+  // }
 };
 
 const sendErrorProd = (err, req, res) => {
@@ -38,24 +39,25 @@ const sendErrorProd = (err, req, res) => {
         message: "something went wrong",
       });
     }
-  } else {
-    // RENDERED WEBSITE
-    if (err.isOperational) {
-      return res.status(err.statusCode).render("error", {
-        title: "Something went wrong",
-        msg: err.message,
-      });
-      //programming or unknown error: don't leak to client
-    } else {
-      //1) log error
-      console.log("ERROR!!! ", err);
-      //2) send generic message to client
-      return res.status(500).render("error", {
-        title: "Something went wrong",
-        msg: "Please try again later",
-      });
-    }
   }
+  // else {
+  //   // RENDERED WEBSITE
+  //   if (err.isOperational) {
+  //     return res.status(err.statusCode).render("error", {
+  //       title: "Something went wrong",
+  //       msg: err.message,
+  //     });
+  //     //programming or unknown error: don't leak to client
+  //   } else {
+  //     //1) log error
+  //     console.log("ERROR!!! ", err);
+  //     //2) send generic message to client
+  //     return res.status(500).render("error", {
+  //       title: "Something went wrong",
+  //       msg: "Please try again later",
+  //     });
+  //   }
+  // }
 };
 
 const handleCastErrorDB = function (error) {
