@@ -3,14 +3,14 @@ const AppError = require("./../utils/appError");
 const sendErrorDev = (err, req, res) => {
   //API errors
   //req.originalUrl: the URL without the hostn
-  if (req.originalUrl.startsWith("/api")) {
-    return res.status(err.statusCode).json({
-      status: err.status,
-      error: err,
-      message: err.message,
-      stack: err.stack,
-    });
-  }
+  // if (req.originalUrl.startsWith("/api")) {
+  return res.status(err.statusCode).json({
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+  });
+  // }
   // else {
   //   //RENDERED WEBSITE errors
   //   return res.status(err.statusCode).render("error", {
@@ -22,24 +22,24 @@ const sendErrorDev = (err, req, res) => {
 
 const sendErrorProd = (err, req, res) => {
   // API
-  if (req.originalUrl.startsWith("/api")) {
-    //operational, trusted error: send message to client
-    if (err.isOperational) {
-      return res.status(err.statusCode).json({
-        status: err.status,
-        message: err.message,
-      });
-      //programming or unknown error: don't leak to client
-    } else {
-      //1) log error
-      console.log("ERROR!!! ", err);
-      //2) send generic message to client
-      return res.status(500).json({
-        status: "error",
-        message: "something went wrong",
-      });
-    }
+  // if (req.originalUrl.startsWith("/api")) {
+  //operational, trusted error: send message to client
+  if (err.isOperational) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+    //programming or unknown error: don't leak to client
+  } else {
+    //1) log error
+    console.log("ERROR!!! ", err);
+    //2) send generic message to client
+    return res.status(500).json({
+      status: "error",
+      message: "something went wrong",
+    });
   }
+  // }
   // else {
   //   // RENDERED WEBSITE
   //   if (err.isOperational) {
