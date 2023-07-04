@@ -32,7 +32,7 @@ const createSendToken = (user, statusCode, req, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
     ),
-    //secure: true, //only send cookie through https
+    secure: true, //only send cookie through https
     httpOnly: true, //cookie cannot be accesed by the browser
     secure: req.secure || req.headers["x-forwarded-proto"] === "https",
     sameSite: "none",
@@ -90,8 +90,13 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.logout = (req, res, next) => {
   res.cookie("jwt", "loggedout", {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
+    ),
+    secure: true, //only send cookie through https
+    httpOnly: true, //cookie cannot be accesed by the browser
+    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+    sameSite: "none",
   });
   res.status(200).json({
     status: "success",
@@ -339,14 +344,6 @@ exports.isLoggedIn = catchAsync(async function (req, res, next) {
       )
     );
   }
-  res.status(200).json({
-    status: "success",
-  });
-});
-
-exports.logout = catchAsync(async (req, res, next) => {
-  res.cookie("jwt", "loggedout");
-
   res.status(200).json({
     status: "success",
   });
