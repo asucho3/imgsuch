@@ -65,9 +65,9 @@ app.use(mongoSanitize());
 app.use(xss());
 
 // Routes
-app.use("api/v1/users", userRouter);
-app.use("api/v1/stories", storyRouter);
-app.use("api/v1/comments", commentRouter);
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/stories", storyRouter);
+app.use("/api/v1/comments", commentRouter);
 
 //add a compression middleware that will compress all text responses
 app.use(compression());
