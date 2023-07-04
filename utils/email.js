@@ -43,7 +43,6 @@ module.exports = class Email {
     //     subject,
     //   }
     // );
-    console.log("TEST TEST TEST", template, subject);
     const html =
       template === "passwordReset"
         ? `<span>${this.url}</span>`
@@ -62,7 +61,8 @@ module.exports = class Email {
     await this.newTransport().sendMail(mailOptions);
   }
   async sendWelcome() {
-    await this.send("welcome", "Welcome to imgsuch!");
+    // disabled for this project
+    await this.send("Welcome", "Welcome to imgsuch!");
   }
   async sendPasswordReset() {
     await this.send("passwordReset", "Reset your password");
