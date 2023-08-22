@@ -27,16 +27,23 @@ const createSendToken = (user, statusCode, req, res) => {
   //defining the cookie
   //cookie is a piece of text that is sent to the browser and it can only be used to be sent back along with each new request that the browser makes
   //cookies with the same name override each other
-
-  res.cookie("jwt", token, {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
-    ),
-    secure: true, //only send cookie through https
-    httpOnly: true, //cookie cannot be accesed by the browser
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    sameSite: "none",
-  });
+  if (process.env.NODE_ENV === "development") {
+    res.cookie("jwt", token, {
+      expires: new Date(
+        Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
+      ),
+    });
+  } else {
+    res.cookie("jwt", token, {
+      expires: new Date(
+        Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
+      ),
+      secure: true, //only send cookie through https
+      httpOnly: true, //cookie cannot be accesed by the browser
+      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+      sameSite: "none",
+    });
+  }
 
   //remove the password from the output
   user.password = undefined;
@@ -89,15 +96,24 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = (req, res, next) => {
-  res.cookie("jwt", "loggedout", {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
-    ),
-    secure: true, //only send cookie through https
-    httpOnly: true, //cookie cannot be accesed by the browser
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    sameSite: "none",
-  });
+  if (process.env.NODE_ENV === "development") {
+    res.cookie("jwt", "loggedout", {
+      expires: new Date(
+        Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
+      ),
+    });
+  } else {
+    res.cookie("jwt", "loggedout", {
+      expires: new Date(
+        Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000 //milliseconds
+      ),
+      secure: true, //only send cookie through https
+      httpOnly: true, //cookie cannot be accesed by the browser
+      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+      sameSite: "none",
+    });
+  }
+
   res.status(200).json({
     status: "success",
   });
